@@ -146,4 +146,12 @@ INSERT INTO "oborudovanie" ("unical_nomer", "id_tipa", "god_vipuska", "id_mesta"
 ('KB-ST-02', 3, 2023, NULL),
 ('MON-ST-03', 2, 2018, NULL),
 ('PRN-R-04', 5, 2015, NULL),
+('IP-BUSH-02', 8, 2023, 2),
+('PRN-BUSH-02', 5, 2024, 2),
+('RT-BUSH-16', 6, 2023, 16),
+('PC-NAU-04', 1, 2022, 4),
+('MON-NAU-04', 3, 2022, 4),
+('KB-IV-10', 2, 2023, 10), 
+('MS-IV-10', 4, 2023, 10),
+('LPT-IV-10', 7, 2024, 10),  
 ('RT-R-05', 6, 2022, NULL);
