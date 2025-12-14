@@ -1,0 +1,898 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict YCdSzIfMkCqul5yS0hzudoyLvcZcy3ie2gCOl3ctDnDdBZro7J2goiBHjIogRf3
+
+-- Dumped from database version 18.1
+-- Dumped by pg_dump version 18.1
+
+-- Started on 2025-12-15 01:44:55
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 233 (class 1255 OID 16511)
+-- Name: check_unique_unical_nomer(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.check_unique_unical_nomer() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM "oborudovanie"
+        WHERE unical_nomer = NEW.unical_nomer
+    ) THEN
+        RAISE EXCEPTION 'Ошибка: Номер %s уже существует в базе данных.', NEW.unical_nomer;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.check_unique_unical_nomer() OWNER TO postgres;
+
+--
+-- TOC entry 235 (class 1255 OID 16515)
+-- Name: obnovlenie_peremesheniya(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.obnovlenie_peremesheniya() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF OLD.id_mesta IS DISTINCT FROM NEW.id_mesta THEN
+        INSERT INTO "peremesheniya" (
+            unical_nomer,
+            id_mesta_staroe,
+            id_mesta_novoe
+        ) VALUES (
+            NEW.unical_nomer,
+            OLD.id_mesta,
+            NEW.id_mesta
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.obnovlenie_peremesheniya() OWNER TO postgres;
+
+--
+-- TOC entry 234 (class 1255 OID 16513)
+-- Name: udalenie_mesta(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.udalenie_mesta() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    UPDATE "oborudovanie"
+    SET id_mesta = NULL
+    WHERE id_mesta = OLD.id_mesta;
+    
+    RETURN OLD;
+END;
+$$;
+
+
+ALTER FUNCTION public.udalenie_mesta() OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 220 (class 1259 OID 16390)
+-- Name: cabinets; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.cabinets (
+    id_cabineta integer NOT NULL,
+    number character varying NOT NULL,
+    korpus integer NOT NULL,
+    etazh integer NOT NULL,
+    CONSTRAINT check_cabinets_etazh CHECK (((etazh >= 0) AND (etazh <= 30))),
+    CONSTRAINT check_cabinets_korpus CHECK ((korpus > 0))
+);
+
+
+ALTER TABLE public.cabinets OWNER TO postgres;
+
+--
+-- TOC entry 219 (class 1259 OID 16389)
+-- Name: cabinets_id_cabineta_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.cabinets_id_cabineta_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.cabinets_id_cabineta_seq OWNER TO postgres;
+
+--
+-- TOC entry 5099 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: cabinets_id_cabineta_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.cabinets_id_cabineta_seq OWNED BY public.cabinets.id_cabineta;
+
+
+--
+-- TOC entry 227 (class 1259 OID 16438)
+-- Name: oborudovanie; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.oborudovanie (
+    unical_nomer character varying NOT NULL,
+    id_tipa integer NOT NULL,
+    god_vipuska integer NOT NULL,
+    id_mesta integer,
+    CONSTRAINT check_oborudovanie_year CHECK (((god_vipuska >= 2007) AND ((god_vipuska)::numeric <= EXTRACT(year FROM CURRENT_DATE))))
+);
+
+
+ALTER TABLE public.oborudovanie OWNER TO postgres;
+
+--
+-- TOC entry 232 (class 1259 OID 16470)
+-- Name: peremesheniya; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.peremesheniya (
+    id_peremesheniya integer NOT NULL,
+    unical_nomer character varying NOT NULL,
+    id_mesta_staroe integer,
+    id_mesta_novoe integer,
+    data_peremesheniya date
+);
+
+
+ALTER TABLE public.peremesheniya OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1259 OID 16469)
+-- Name: peremesheniya_id_peremesheniya_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.peremesheniya_id_peremesheniya_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.peremesheniya_id_peremesheniya_seq OWNER TO postgres;
+
+--
+-- TOC entry 5100 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: peremesheniya_id_peremesheniya_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.peremesheniya_id_peremesheniya_seq OWNED BY public.peremesheniya.id_peremesheniya;
+
+
+--
+-- TOC entry 224 (class 1259 OID 16421)
+-- Name: pol; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pol (
+    id_pola integer NOT NULL,
+    nazvanie character varying(10)
+);
+
+
+ALTER TABLE public.pol OWNER TO postgres;
+
+--
+-- TOC entry 223 (class 1259 OID 16420)
+-- Name: pol_id_pola_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.pol_id_pola_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.pol_id_pola_seq OWNER TO postgres;
+
+--
+-- TOC entry 5101 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: pol_id_pola_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.pol_id_pola_seq OWNED BY public.pol.id_pola;
+
+
+--
+-- TOC entry 226 (class 1259 OID 16429)
+-- Name: rabochie_mesta; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.rabochie_mesta (
+    id_mesta integer NOT NULL,
+    id_cabineta integer NOT NULL,
+    id_sotrudnika integer NOT NULL
+);
+
+
+ALTER TABLE public.rabochie_mesta OWNER TO postgres;
+
+--
+-- TOC entry 225 (class 1259 OID 16428)
+-- Name: rabochie_mesta_id_mesta_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.rabochie_mesta_id_mesta_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.rabochie_mesta_id_mesta_seq OWNER TO postgres;
+
+--
+-- TOC entry 5102 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: rabochie_mesta_id_mesta_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.rabochie_mesta_id_mesta_seq OWNED BY public.rabochie_mesta.id_mesta;
+
+
+--
+-- TOC entry 222 (class 1259 OID 16405)
+-- Name: sotrudniki; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sotrudniki (
+    id_sotrudnika integer NOT NULL,
+    full_name character varying(150) NOT NULL,
+    phone character varying(20) NOT NULL,
+    id_pola integer NOT NULL,
+    email character varying(50) NOT NULL,
+    CONSTRAINT check_sotrudniki_phone CHECK (((phone)::text ~ '^\+?[0-9\s\-\(\)]{5,20}$'::text))
+);
+
+
+ALTER TABLE public.sotrudniki OWNER TO postgres;
+
+--
+-- TOC entry 221 (class 1259 OID 16404)
+-- Name: sotrudniki_id_sotrudnika_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.sotrudniki_id_sotrudnika_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.sotrudniki_id_sotrudnika_seq OWNER TO postgres;
+
+--
+-- TOC entry 5103 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: sotrudniki_id_sotrudnika_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.sotrudniki_id_sotrudnika_seq OWNED BY public.sotrudniki.id_sotrudnika;
+
+
+--
+-- TOC entry 230 (class 1259 OID 16457)
+-- Name: spisannoe_oborudovanie; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.spisannoe_oborudovanie (
+    unical_nomer character varying NOT NULL,
+    tip character varying(50) NOT NULL,
+    god_vipuska integer NOT NULL,
+    data_spisania date NOT NULL,
+    prichina text NOT NULL,
+    CONSTRAINT check_spisannoe_year CHECK (((god_vipuska >= 2007) AND ((god_vipuska)::numeric <= EXTRACT(year FROM CURRENT_DATE))))
+);
+
+
+ALTER TABLE public.spisannoe_oborudovanie OWNER TO postgres;
+
+--
+-- TOC entry 229 (class 1259 OID 16449)
+-- Name: tip; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.tip (
+    id_tipa integer NOT NULL,
+    naimenovanie character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.tip OWNER TO postgres;
+
+--
+-- TOC entry 228 (class 1259 OID 16448)
+-- Name: tip_id_tipa_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.tip_id_tipa_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.tip_id_tipa_seq OWNER TO postgres;
+
+--
+-- TOC entry 5104 (class 0 OID 0)
+-- Dependencies: 228
+-- Name: tip_id_tipa_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.tip_id_tipa_seq OWNED BY public.tip.id_tipa;
+
+
+--
+-- TOC entry 4892 (class 2604 OID 16393)
+-- Name: cabinets id_cabineta; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cabinets ALTER COLUMN id_cabineta SET DEFAULT nextval('public.cabinets_id_cabineta_seq'::regclass);
+
+
+--
+-- TOC entry 4897 (class 2604 OID 16473)
+-- Name: peremesheniya id_peremesheniya; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.peremesheniya ALTER COLUMN id_peremesheniya SET DEFAULT nextval('public.peremesheniya_id_peremesheniya_seq'::regclass);
+
+
+--
+-- TOC entry 4894 (class 2604 OID 16424)
+-- Name: pol id_pola; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pol ALTER COLUMN id_pola SET DEFAULT nextval('public.pol_id_pola_seq'::regclass);
+
+
+--
+-- TOC entry 4895 (class 2604 OID 16432)
+-- Name: rabochie_mesta id_mesta; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rabochie_mesta ALTER COLUMN id_mesta SET DEFAULT nextval('public.rabochie_mesta_id_mesta_seq'::regclass);
+
+
+--
+-- TOC entry 4893 (class 2604 OID 16408)
+-- Name: sotrudniki id_sotrudnika; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sotrudniki ALTER COLUMN id_sotrudnika SET DEFAULT nextval('public.sotrudniki_id_sotrudnika_seq'::regclass);
+
+
+--
+-- TOC entry 4896 (class 2604 OID 16452)
+-- Name: tip id_tipa; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tip ALTER COLUMN id_tipa SET DEFAULT nextval('public.tip_id_tipa_seq'::regclass);
+
+
+--
+-- TOC entry 5081 (class 0 OID 16390)
+-- Dependencies: 220
+-- Data for Name: cabinets; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.cabinets (id_cabineta, number, korpus, etazh) FROM stdin;
+1	101	1	1
+2	102	1	1
+3	103	1	1
+4	201	1	2
+5	202	1	2
+6	310	1	3
+7	311	1	3
+8	1	2	1
+9	2	2	1
+10	3	2	1
+11	4	2	1
+12	5	2	1
+13	501	5	5
+14	502	5	5
+15	503	5	5
+16	504	5	5
+17	601	5	6
+18	602	5	6
+19	603	5	6
+20	604	5	6
+21	704	5	7
+\.
+
+
+--
+-- TOC entry 5088 (class 0 OID 16438)
+-- Dependencies: 227
+-- Data for Name: oborudovanie; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.oborudovanie (unical_nomer, id_tipa, god_vipuska, id_mesta) FROM stdin;
+PC-A-02	1	2021	2
+LPT-A-03	7	2023	3
+PC-A-04	1	2020	4
+LPT-A-05	7	2024	5
+PC-A-06	1	2021	6
+PC-A-07	1	2022	7
+LPT-A-08	7	2023	8
+PC-A-09	1	2024	9
+PC-A-10	1	2020	10
+LPT-A-11	7	2021	11
+PC-A-12	1	2022	12
+PC-A-13	1	2023	13
+LPT-A-14	7	2024	14
+PC-A-15	1	2020	15
+PC-A-16	1	2021	16
+LPT-A-17	7	2022	17
+PC-A-18	1	2023	18
+PC-A-19	1	2024	19
+LPT-A-20	7	2020	20
+PC-A-21	1	2021	21
+PC-A-22	1	2022	22
+LPT-A-23	7	2023	23
+PC-A-24	1	2024	24
+PC-A-25	1	2020	25
+LPT-A-26	7	2021	26
+PC-A-27	1	2022	27
+PC-A-28	1	2023	28
+LPT-A-29	7	2024	29
+PC-A-30	1	2020	30
+PC-A-31	1	2021	31
+LPT-A-32	7	2022	32
+PC-A-33	1	2023	33
+PC-A-34	1	2024	34
+MON-B-01	2	2022	1
+KB-B-01	3	2018	1
+MON-B-04	2	2020	4
+MS-B-04	4	2017	4
+IP-B-05	8	2021	5
+MON-B-05	2	2016	5
+MON-B-08	2	2023	8
+RT-B-08	6	2019	8
+MON-B-12	2	2022	12
+PRN-B-12	5	2018	12
+MON-B-15	2	2020	15
+KB-B-15	3	2020	15
+IP-B-20	8	2021	20
+MON-B-25	2	2020	25
+KB-B-25	3	2019	25
+MS-B-30	4	2018	30
+MS-C-02	4	2024	2
+KB-C-06	3	2023	6
+MS-C-10	4	2022	10
+KB-C-14	3	2021	14
+MS-C-18	4	2020	18
+KB-C-22	3	2019	22
+MS-C-26	4	2018	26
+KB-C-31	3	2017	31
+IP-C-34	8	2020	34
+MS-ST-01	4	2024	\N
+KB-ST-02	3	2023	\N
+MON-ST-03	2	2018	\N
+PRN-R-04	5	2015	\N
+RT-R-05	6	2022	\N
+IP-BUSH-02	8	2023	2
+PRN-BUSH-02	5	2024	2
+RT-BUSH-16	6	2023	16
+PC-NAU-04	1	2022	4
+MON-NAU-04	3	2022	4
+KB-IV-10	2	2023	10
+MS-IV-10	4	2023	10
+LPT-IV-10	7	2024	10
+PC-A-01	1	2022	8
+\.
+
+
+--
+-- TOC entry 5093 (class 0 OID 16470)
+-- Dependencies: 232
+-- Data for Name: peremesheniya; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.peremesheniya (id_peremesheniya, unical_nomer, id_mesta_staroe, id_mesta_novoe, data_peremesheniya) FROM stdin;
+1	PC-A-01	1	8	\N
+\.
+
+
+--
+-- TOC entry 5085 (class 0 OID 16421)
+-- Dependencies: 224
+-- Data for Name: pol; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.pol (id_pola, nazvanie) FROM stdin;
+1	Муж
+2	Жен
+\.
+
+
+--
+-- TOC entry 5087 (class 0 OID 16429)
+-- Dependencies: 226
+-- Data for Name: rabochie_mesta; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.rabochie_mesta (id_mesta, id_cabineta, id_sotrudnika) FROM stdin;
+1	8	19
+2	8	22
+3	9	19
+4	9	18
+5	9	21
+6	10	20
+7	10	33
+8	1	17
+9	2	23
+10	3	24
+11	4	25
+12	4	28
+13	5	26
+14	6	27
+15	7	29
+16	11	22
+17	11	35
+18	12	30
+19	13	31
+20	13	32
+21	14	34
+22	15	36
+23	15	37
+24	16	38
+25	16	39
+26	17	40
+27	17	46
+28	17	47
+29	18	41
+30	19	42
+31	20	43
+32	20	32
+33	20	44
+34	21	45
+\.
+
+
+--
+-- TOC entry 5083 (class 0 OID 16405)
+-- Dependencies: 222
+-- Data for Name: sotrudniki; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.sotrudniki (id_sotrudnika, full_name, phone, id_pola, email) FROM stdin;
+17	Саруханова Наталья Александровна	+79031234567	2	natsarukhanova@mail.ru
+18	Наумова Екатерина Дмитриевна	+79032345678	2	naumova@gmail.com
+19	Саруханова Мария Александровна	+79033456789	2	mashasarukhan@gmail.ru
+20	Мочалова Мария Александровна	+79034567890	2	mochalova@internet.ru
+21	Илькина Злата Владимировна	+79035678901	2	ilkina@mail.ru
+22	Бушуев Артём Дмитриевич	+79036789012	1	bushuev@gmail.com
+23	Туктарова Алина Антоновна	+79037890127	2	tuktarova@yandex.ru
+24	Иванов Иван Иванович	+79038901234	1	ivanov@internet.ru
+25	Андрушко Кирилл Михайлович	+79039012345	1	andrushko@mail.ru
+26	Петров Аркадий Сергеевич	+79051112233	1	petrov@gmail.com
+27	Сидоров Олег Викторович	+79052223344	1	sidorov@yandex.ru
+28	Завадский Илья Владимирович	+79053335656	1	zavadskie@mail.ru
+29	Шапито Владислав Дмитриевич	+79054445566	1	shapito@internet.ru
+30	Иванова Алекса Ивановна	+79053336677	2	ivanovaal@mail.ru
+31	Щербакова Вера Павловна	+79053336778	2	sherbakova@mail.ru
+32	Туктарова Ульяна Антоновна	+79037890123	2	ulyanka@yandex.ru
+33	Калантарян Мери Арменовна	+79037890234	2	kalantaryan@yandex.ru
+34	Винина Вероника Алексеевна	+79034569583	2	vinina@internet.ru
+35	Бутков Иван Денисович	+79034562861	1	butkov@internet.ru
+36	Калантарян Мария Арменовна	+79031285621	2	marrykk@mail.ru
+37	Семенова Арина Владимировна	+79031282221	2	aaaaar@yandex.ru
+38	Школьников Антон Андреевич	+79039371632	1	shkolnikov@internet.ru
+39	Пешков Степан Петрович	+79251285699	1	stepan@gmail.com
+40	Прокудин Георгий Елгуджаевич	+79181284621	1	gosha@mail.ru
+41	Леонова Антонина Александровна	+79251385681	2	leonova@mail.ru
+42	Чеславская Светлана Алексеевна	+79039285626	2	svetikkk@gmail.com
+43	Брылева София Дмитриевна	+79027485655	2	sofushka@interner.ru
+44	Долгих Дамир Русланович	+79833288621	1	damir@yandex.ru
+45	Кизогян Виктор Мехакович	+79131285911	1	vikkoss@mail.ru
+46	Мисинев Максим Владимирович	+79031226341	1	maxmis@gmail.com
+47	Мисинева Меланья Владимировна	+79099472617	1	melanya@gmail.com
+\.
+
+
+--
+-- TOC entry 5091 (class 0 OID 16457)
+-- Dependencies: 230
+-- Data for Name: spisannoe_oborudovanie; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.spisannoe_oborudovanie (unical_nomer, tip, god_vipuska, data_spisania, prichina) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5090 (class 0 OID 16449)
+-- Dependencies: 229
+-- Data for Name: tip; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.tip (id_tipa, naimenovanie) FROM stdin;
+1	Системный блок
+2	Клавиатура
+3	Монитор
+4	Мышь
+5	Принтер
+6	Роутер
+7	Ноутбук
+8	Телефон
+\.
+
+
+--
+-- TOC entry 5105 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: cabinets_id_cabineta_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.cabinets_id_cabineta_seq', 21, true);
+
+
+--
+-- TOC entry 5106 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: peremesheniya_id_peremesheniya_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.peremesheniya_id_peremesheniya_seq', 1, true);
+
+
+--
+-- TOC entry 5107 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: pol_id_pola_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.pol_id_pola_seq', 2, true);
+
+
+--
+-- TOC entry 5108 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: rabochie_mesta_id_mesta_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.rabochie_mesta_id_mesta_seq', 34, true);
+
+
+--
+-- TOC entry 5109 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: sotrudniki_id_sotrudnika_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.sotrudniki_id_sotrudnika_seq', 47, true);
+
+
+--
+-- TOC entry 5110 (class 0 OID 0)
+-- Dependencies: 228
+-- Name: tip_id_tipa_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.tip_id_tipa_seq', 8, true);
+
+
+--
+-- TOC entry 4904 (class 2606 OID 16403)
+-- Name: cabinets cabinets_number_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cabinets
+    ADD CONSTRAINT cabinets_number_key UNIQUE (number);
+
+
+--
+-- TOC entry 4906 (class 2606 OID 16401)
+-- Name: cabinets cabinets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cabinets
+    ADD CONSTRAINT cabinets_pkey PRIMARY KEY (id_cabineta);
+
+
+--
+-- TOC entry 4918 (class 2606 OID 16447)
+-- Name: oborudovanie oborudovanie_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.oborudovanie
+    ADD CONSTRAINT oborudovanie_pkey PRIMARY KEY (unical_nomer);
+
+
+--
+-- TOC entry 4924 (class 2606 OID 16479)
+-- Name: peremesheniya peremesheniya_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.peremesheniya
+    ADD CONSTRAINT peremesheniya_pkey PRIMARY KEY (id_peremesheniya);
+
+
+--
+-- TOC entry 4914 (class 2606 OID 16427)
+-- Name: pol pol_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pol
+    ADD CONSTRAINT pol_pkey PRIMARY KEY (id_pola);
+
+
+--
+-- TOC entry 4916 (class 2606 OID 16437)
+-- Name: rabochie_mesta rabochie_mesta_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rabochie_mesta
+    ADD CONSTRAINT rabochie_mesta_pkey PRIMARY KEY (id_mesta);
+
+
+--
+-- TOC entry 4908 (class 2606 OID 16419)
+-- Name: sotrudniki sotrudniki_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sotrudniki
+    ADD CONSTRAINT sotrudniki_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 4910 (class 2606 OID 16417)
+-- Name: sotrudniki sotrudniki_phone_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sotrudniki
+    ADD CONSTRAINT sotrudniki_phone_key UNIQUE (phone);
+
+
+--
+-- TOC entry 4912 (class 2606 OID 16415)
+-- Name: sotrudniki sotrudniki_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sotrudniki
+    ADD CONSTRAINT sotrudniki_pkey PRIMARY KEY (id_sotrudnika);
+
+
+--
+-- TOC entry 4922 (class 2606 OID 16468)
+-- Name: spisannoe_oborudovanie spisannoe_oborudovanie_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.spisannoe_oborudovanie
+    ADD CONSTRAINT spisannoe_oborudovanie_pkey PRIMARY KEY (unical_nomer);
+
+
+--
+-- TOC entry 4920 (class 2606 OID 16456)
+-- Name: tip tip_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tip
+    ADD CONSTRAINT tip_pkey PRIMARY KEY (id_tipa);
+
+
+--
+-- TOC entry 4931 (class 2620 OID 16512)
+-- Name: oborudovanie enforce_unique_unical_nomer; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER enforce_unique_unical_nomer BEFORE INSERT ON public.oborudovanie FOR EACH ROW EXECUTE FUNCTION public.check_unique_unical_nomer();
+
+
+--
+-- TOC entry 4930 (class 2620 OID 16514)
+-- Name: rabochie_mesta free_equipment_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER free_equipment_trigger AFTER DELETE ON public.rabochie_mesta FOR EACH ROW EXECUTE FUNCTION public.udalenie_mesta();
+
+
+--
+-- TOC entry 4932 (class 2620 OID 16516)
+-- Name: oborudovanie obnovlenie_peremesheniya_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER obnovlenie_peremesheniya_trigger BEFORE UPDATE ON public.oborudovanie FOR EACH ROW EXECUTE FUNCTION public.obnovlenie_peremesheniya();
+
+
+--
+-- TOC entry 4928 (class 2606 OID 16485)
+-- Name: oborudovanie oborudovanie_id_mesta_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.oborudovanie
+    ADD CONSTRAINT oborudovanie_id_mesta_fkey FOREIGN KEY (id_mesta) REFERENCES public.rabochie_mesta(id_mesta);
+
+
+--
+-- TOC entry 4929 (class 2606 OID 16495)
+-- Name: oborudovanie oborudovanie_id_tipa_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.oborudovanie
+    ADD CONSTRAINT oborudovanie_id_tipa_fkey FOREIGN KEY (id_tipa) REFERENCES public.tip(id_tipa);
+
+
+--
+-- TOC entry 4926 (class 2606 OID 16480)
+-- Name: rabochie_mesta rabochie_mesta_id_cabineta_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rabochie_mesta
+    ADD CONSTRAINT rabochie_mesta_id_cabineta_fkey FOREIGN KEY (id_cabineta) REFERENCES public.cabinets(id_cabineta);
+
+
+--
+-- TOC entry 4927 (class 2606 OID 16490)
+-- Name: rabochie_mesta rabochie_mesta_id_sotrudnika_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rabochie_mesta
+    ADD CONSTRAINT rabochie_mesta_id_sotrudnika_fkey FOREIGN KEY (id_sotrudnika) REFERENCES public.sotrudniki(id_sotrudnika);
+
+
+--
+-- TOC entry 4925 (class 2606 OID 16500)
+-- Name: sotrudniki sotrudniki_id_pola_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sotrudniki
+    ADD CONSTRAINT sotrudniki_id_pola_fkey FOREIGN KEY (id_pola) REFERENCES public.pol(id_pola);
+
+
+-- Completed on 2025-12-15 01:44:55
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict YCdSzIfMkCqul5yS0hzudoyLvcZcy3ie2gCOl3ctDnDdBZro7J2goiBHjIogRf3
+
