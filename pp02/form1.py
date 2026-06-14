@@ -11,6 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
+
 class Ui_Widget1(object):
     def setupUi(self, Widget):
         Widget.setObjectName("Widget")
