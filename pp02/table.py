@@ -112,4 +112,3 @@ class Widget2(QWidget):
 
     def exit(self):
         self.hide()
-

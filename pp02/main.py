@@ -26,13 +26,14 @@ class Widget1(QWidget):
     def auth(self):
         self.login = self.ui.login.text()
         self.parol = self.ui.parol.text()
+        hash_parol = hashlib.sha256(self.parol.encode()).hexdigest()
         cursor = self.connect.cur
-        cursor.execute(f"SELECT login, parol  FROM users WHERE login = '{self.login}' AND parol = '{self.parol}'")
+        cursor.execute(f"SELECT login, parol  FROM users WHERE login = '{self.login}' AND parol = '{hash_parol}'")
         outpu = cursor.fetchone()
         print(outpu)
         if outpu != None:
             QMessageBox.information(self, "Сообщение", "Вход совершен")
-            #self.destroy()
+            self.destroy()
             self.tab.show()
         else:
             QMessageBox.information(self, "Сообщение", "Пользователь не зарегестрирован")

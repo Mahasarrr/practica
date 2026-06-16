@@ -81,4 +81,3 @@ class Ui_Widget2(object):
         self.zap2.setText(_translate("Widget2", "Сотрудники >3 устройств"))
         self.zap3.setText(_translate("Widget2", "Незакрепленное"))
         self.toolBox.setItemText(self.toolBox.indexOf(self.page_4), _translate("Widget2", "Запросы"))
-
