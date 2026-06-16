@@ -1,6 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
-
+import hashlib
 from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5 import uic
 from podcl import Connect
@@ -26,13 +26,14 @@ class Widget1(QWidget):
     def auth(self):
         self.login = self.ui.login.text()
         self.parol = self.ui.parol.text()
+        hash_parol = hashlib.sha256(self.parol.encode()).hexdigest()
         cursor = self.connect.cur
-        cursor.execute(f"SELECT login, parol  FROM users WHERE login = '{self.login}' AND parol = '{self.parol}'")
+        cursor.execute(f"SELECT login, parol  FROM users WHERE login = '{self.login}' AND parol = '{hash_parol}'")
         outpu = cursor.fetchone()
         print(outpu)
         if outpu != None:
             QMessageBox.information(self, "Сообщение", "Вход совершен")
-            #self.destroy()
+            self.destroy()
             self.tab.show()
         else:
             QMessageBox.information(self, "Сообщение", "Пользователь не зарегестрирован")
@@ -44,7 +45,14 @@ class Widget1(QWidget):
             QMessageBox.warning(self,"Предупреждение", "Поля логин и пароль не должны быть пустыми")
             return
         else:
-            self.connect.cur.execute(f"INSERT INTO users (login, parol) VALUES ('{self.login}', '{self.parol}')")
+            self.connect.cur.execute(f"SELECT * from users where login='{self.login}'")
+            outpu=self.connect.cur.fetchone()
+        if outpu:
+            QMessageBox.warning(self, 'Предупреждение', 'Такой пользователь уже зарегистрирован')
+            return
+        else:
+            hash_parol = hashlib.sha256(self.parol.encode()).hexdigest()
+            self.connect.cur.execute(f"INSERT INTO users (login, parol) VALUES ('{self.login}', '{hash_parol}')")
             self.connect.con.commit()
             QMessageBox.information(self,'Сообщение', 'пользователь зарегистрирован')
 

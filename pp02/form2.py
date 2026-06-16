@@ -37,7 +37,7 @@ class Ui_Widget2(object):
         self.exit.setStyleSheet("background-color: rgb(255, 56, 99);")
         self.exit.setObjectName("exit")
         self.toolBox = QtWidgets.QToolBox(Widget2)
-        self.toolBox.setGeometry(QtCore.QRect(40, 150, 221, 161))
+        self.toolBox.setGeometry(QtCore.QRect(30, 150, 221, 161))
         self.toolBox.setObjectName("toolBox")
         self.widget = QtWidgets.QWidget()
         self.widget.setGeometry(QtCore.QRect(0, 0, 221, 91))
@@ -81,4 +81,3 @@ class Ui_Widget2(object):
         self.zap2.setText(_translate("Widget2", "Сотрудники >3 устройств"))
         self.zap3.setText(_translate("Widget2", "Незакрепленное"))
         self.toolBox.setItemText(self.toolBox.indexOf(self.page_4), _translate("Widget2", "Запросы"))
-

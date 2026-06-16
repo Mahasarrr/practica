@@ -19,4 +19,3 @@ class Connect:
         except Error as e:
             print('Ошибка соединения')
             print(e)
-
