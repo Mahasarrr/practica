@@ -62,4 +62,3 @@ if __name__ == "__main__":
     widget = Widget1()
     widget.show()
     app.exec()
-
