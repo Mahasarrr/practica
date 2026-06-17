@@ -2,7 +2,7 @@
 import sys
 
 from PyQt5.QtWidgets import QApplication, QWidget, QTableWidgetItem, QMessageBox, QInputDialog
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QEvent
 from podcl import Connect
 
 # Important:
@@ -19,6 +19,10 @@ class Widget2(QWidget):
         self.connect=Connect()
         self.table = "oborudovanie"
         self.insert()
+        self.sort = Qt.AscendingOrder
+        self.sort_spis = Qt.AscendingOrder
+        self.ui.tableWidget.installEventFilter(self)
+        self.ui.tableWidget.horizontalHeader().sectionClicked.connect(self.sortirovka)
         self.ui.tabspis.clicked.connect(self.tabspis)
         self.ui.tabmesta.clicked.connect(self.tabmesta)
         self.ui.tabob.clicked.connect(self.tabob)
@@ -27,7 +31,7 @@ class Widget2(QWidget):
         self.ui.add.clicked.connect(self.add)
         self.ui.izm.clicked.connect(self.izm)
         self.ui.spisat.clicked.connect(self.spisat)
-        self.ui.exit.clicked.connect(self.exit)
+        self.ui.exit.clicked.connect(self.vihod)
 
     def insert(self):
         self.table = "oborudovanie"
@@ -48,6 +52,8 @@ class Widget2(QWidget):
                 item=QTableWidgetItem(str(cell_data))
                 self.ui.tableWidget.setItem(row_num, col_num, item)
                 self.ui.tabob.setEnabled(False)
+                self.ui.zap2.setEnabled(True)
+                self.ui.zap3.setEnabled(True)
                 if col_num == 0:
                     item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                     self.ui.tableWidget.setItem(row_num, col_num, item)
@@ -59,6 +65,7 @@ class Widget2(QWidget):
         self.ui.spisat.setEnabled(True)
 
     def tabspis(self):
+        self.table = "spisannoe"
         self.connect.cur.execute('SELECT * from spisannoe_oborudovanie')
         headers2 = [desc[0] for desc in self.connect.cur.description]
         self.ui.tableWidget.setHorizontalHeaderLabels(headers2)
@@ -78,6 +85,8 @@ class Widget2(QWidget):
                 self.ui.spisat.setEnabled(False)
                 self.ui.add.setEnabled(False)
                 self.ui.izm.setEnabled(False)
+                self.ui.zap2.setEnabled(True)
+                self.ui.zap3.setEnabled(True)
 
     def tabmesta(self):
         self.table = "rabochie_mesta"
@@ -103,6 +112,8 @@ class Widget2(QWidget):
                     self.ui.tableWidget.setItem(row3_num, col3_num, item)
                     self.ui.add.setEnabled(True)
                     self.ui.izm.setEnabled(True)
+                    self.ui.zap2.setEnabled(True)
+                    self.ui.zap3.setEnabled(True)
 
     def zap2(self):
         self.connect.cur.execute('SELECT sotrudniki.full_name AS "Сотрудник", COUNT(oborudovanie.unical_nomer) AS "Количество закрепленных устройств" FROM sotrudniki JOIN rabochie_mesta ON sotrudniki.id_sotrudnika = rabochie_mesta.id_sotrudnika JOIN oborudovanie ON rabochie_mesta.id_mesta = oborudovanie.id_mesta GROUP BY sotrudniki.full_name HAVING COUNT(oborudovanie.unical_nomer) > 3 ORDER BY "Количество закрепленных устройств" DESC')
@@ -115,8 +126,15 @@ class Widget2(QWidget):
             for col4_num, cell4_data in enumerate(row4_data):
                 item = QTableWidgetItem(str(cell4_data))
                 self.ui.tableWidget.setItem(row4_num, col4_num, item)
+                self.ui.spisat.setEnabled(False)
+                self.ui.add.setEnabled(False)
+                self.ui.izm.setEnabled(False)
                 self.ui.zap2.setEnabled(False)
                 self.ui.zap3.setEnabled(True)
+                self.ui.tabob.setEnabled(True)
+                self.ui.tabspis.setEnabled(True)
+                self.ui.tabmesta.setEnabled(True)
+
 
     def zap3(self):
         self.connect.cur.execute('SELECT oborudovanie.unical_nomer AS "Уникальный номер", tip.naimenovanie AS "Тип оборудования" FROM oborudovanie JOIN tip ON oborudovanie.id_tipa = tip.id_tipa WHERE oborudovanie.id_mesta IS NULL')
@@ -129,8 +147,14 @@ class Widget2(QWidget):
             for col5_num, cell5_data in enumerate(row5_data):
                 item = QTableWidgetItem(str(cell5_data))
                 self.ui.tableWidget.setItem(row5_num, col5_num, item)
+                self.ui.spisat.setEnabled(False)
+                self.ui.add.setEnabled(False)
+                self.ui.izm.setEnabled(False)
                 self.ui.zap2.setEnabled(True)
                 self.ui.zap3.setEnabled(False)
+                self.ui.tabob.setEnabled(True)
+                self.ui.tabspis.setEnabled(True)
+                self.ui.tabmesta.setEnabled(True)
 
     def add(self):
         row = self.ui.tableWidget.rowCount()
@@ -150,12 +174,6 @@ class Widget2(QWidget):
                 self.connect.con.commit()
                 QMessageBox.information(self, 'Сообщение', 'Запись обновлена')
                 self.insert()
-            else:
-                self.connect.cur.execute(f"INSERT INTO oborudovanie (unical_nomer, id_tipa, god_vipuska, id_mesta) VALUES ('{nomer}', '{tip}', '{god}', '{mesto}')")
-                self.connect.con.commit()
-                QMessageBox.information(self, 'Сообщение', 'Запись добавлена')
-                self.insert()
-
         elif self.table == 'rabochie_mesta':
             self.izm_mesta()
 
@@ -171,7 +189,45 @@ class Widget2(QWidget):
             self.connect.con.commit()
             QMessageBox.information(self, 'Сообщение', 'Запись обновлена')
             self.tabmesta()
-        else:
+
+    def eventFilter(self, obj, event):
+        if obj == self.ui.tableWidget and event.type() == QEvent.KeyPress:
+            if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+                if self.table == 'oborudovanie':
+                    self.saveob()
+                elif self.table == 'rabochie_mesta':
+                    self.savemest()
+                return True
+        return super().eventFilter(obj, event)
+
+    def saveob(self):
+        row = self.ui.tableWidget.currentRow()
+        if row < 0:
+            return
+        if self.ui.tableWidget.item(row, 0) is None:
+            return
+        nomer = self.ui.tableWidget.item(row, 0).text()
+        tip = self.ui.tableWidget.item(row, 1).text()
+        god = self.ui.tableWidget.item(row, 2).text()
+        mesto = self.ui.tableWidget.item(row, 3).text()
+        self.connect.cur.execute(f"SELECT * from oborudovanie where unical_nomer='{nomer}'")
+        if not self.connect.cur.fetchone():
+            self.connect.cur.execute(f"INSERT INTO oborudovanie (unical_nomer, id_tipa, god_vipuska, id_mesta) VALUES ('{nomer}', '{tip}', '{god}', '{mesto}')")
+            self.connect.con.commit()
+            QMessageBox.information(self, 'Сообщение', 'Запись добавлена')
+            self.insert()
+
+    def savemest(self):
+        row = self.ui.tableWidget.currentRow()
+        if row < 0:
+            return
+        if self.ui.tableWidget.item(row, 0) is None:
+            return
+        id_mesta = self.ui.tableWidget.item(row, 0).text()
+        id_cabineta = self.ui.tableWidget.item(row, 1).text()
+        id_sotrudnika = self.ui.tableWidget.item(row, 2).text()
+        self.connect.cur.execute(f"SELECT * from rabochie_mesta where id_mesta='{id_mesta}'")
+        if not self.connect.cur.fetchone():
             self.connect.cur.execute(f"INSERT INTO rabochie_mesta (id_mesta, id_cabineta, id_sotrudnika) VALUES ('{id_mesta}', '{id_cabineta}', '{id_sotrudnika}')")
             self.connect.con.commit()
             QMessageBox.information(self, 'Сообщение', 'Запись добавлена')
@@ -188,5 +244,22 @@ class Widget2(QWidget):
         QMessageBox.information(self, 'Сообщение', 'Оборудование списано')
         self.insert()
 
-    def exit(self):
-        self.hide()
+    def sortirovka(self, index):
+        if self.table=='oborudovanie':
+            if index == 2:
+                self.ui.tableWidget.sortItems(2, self.sort)
+                if self.sort == Qt.AscendingOrder:
+                    self.sort = Qt.DescendingOrder
+                else:
+                    self.sort = Qt.AscendingOrder
+        elif self.table == 'spisannoe':
+            if index == 3:
+                self.ui.tableWidget.sortItems(3, self.sort_spis)
+
+                if self.sort_spis == Qt.AscendingOrder:
+                    self.sort_spis = Qt.DescendingOrder
+                else:
+                    self.sort_spis = Qt.AscendingOrder
+
+    def vihod(self):
+        self.exit()
